@@ -7,6 +7,7 @@ from app.utils.professor_summary_util import generate_professor_summary
 from app.utils.refine_text_util import llm_refine_text
 from app.utils.first_notes_util import generate_final_lecture_notes
 from app.utils.convert_notes_into_markdown_util import convert_notes_to_markdown
+from app.utils.chat_with_notes_util import process_and_answer
 
 router = APIRouter()
 
@@ -64,3 +65,20 @@ async def clean_lecture_text(
     final_answer = convert_notes_to_markdown(lecture_prepared)
 
     return {"status": 200, "text": final_answer}
+
+
+
+@router.post("/chat-with-notes")
+async def chat_with_notes(
+    file: UploadFile = File(...),
+    question: str = Form(...)
+):
+    os.makedirs("temp", exist_ok=True)
+
+    file_path = f"temp/{file.filename}"
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
+
+    answer = process_and_answer(file_path, question)
+
+    return {"status": 200, "answer": answer}
